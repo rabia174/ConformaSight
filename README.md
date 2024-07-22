@@ -77,7 +77,7 @@ plot_conformal_explainer(model_base, X_Cal, y_cal, X_test, y_test, alpha, class_
 
 ### Contributing
 
-The code is produced in (L/V) and the testing and documentation produced with (L/F).
+The code is produced by the fund provided by the University of Bologna.
 
 <b>Authors<b/> <br/>
 Fatima Rabia Yapicioglu <br/>
