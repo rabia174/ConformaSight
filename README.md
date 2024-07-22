@@ -49,12 +49,7 @@ The code will plot the following bar graph which compares the change in coverage
 
 <b> Technology Used: </b> Python <br/>
 <b> Dependencies: </b> Please check <ins>requirements.txt</ins> file in documentation. <br/>
-<b> Installation Instructions: </b>  To download the repository internally, please use the following instruction to download package.
-<br/>
 
-```python
-! git clone "https://github.lmbg.audi.vwg/ALMBT5A/ConformaSightGlobalExplainer.git"
-```
 ### Usage
 
 You should divide your data as follows to use the ConformaSight, <br/>
