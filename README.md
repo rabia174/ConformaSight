@@ -48,7 +48,7 @@ The code will plot the following bar graph which compares the change in coverage
 ### Installation
 
 <b> Technology Used: </b> Python <br/>
-<b> Dependencies: </b> Please check <ins>requirements.txt</ins> file in documentation. <br/>
+<b> Dependencies: </b> Please check <ins>requirements.txt</ins> file in the environment folder. <br/>
 
 ### Usage
 
