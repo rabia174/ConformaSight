@@ -38,8 +38,6 @@ def get_qhat(y_cal_prob_class, alpha, mask):
     correction = ( class_size + 1 ) / class_size # correct it with ceiling function later
 
     q *= correction
-    if q >=100:
-       q = q % 100
     return s_scores, q
 
 '''
