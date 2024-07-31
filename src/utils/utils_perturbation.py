@@ -2,18 +2,18 @@
 
 import pandas as pd
 import numpy as np
-import xgboost as xgb
-import seaborn as sns
-import matplotlib.pyplot as plt
-from xgboost import XGBClassifier
+# import xgboost as xgb
+# import seaborn as sns
+# import matplotlib.pyplot as plt
+# from xgboost import XGBClassifier
 
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder
-from sklearn.preprocessing import StandardScaler
+# from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+# from sklearn.preprocessing import StandardScaler
 
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OrdinalEncoder
-from utils_baseline import *
-from utils_preprocess import *
+# from sklearn.model_selection import train_test_split
+# from sklearn.preprocessing import OrdinalEncoder
+# from .utils_baseline import *
+# from .utils_preprocess import *
 import configparser
 
 # Create a ConfigParser object
@@ -21,11 +21,11 @@ config = configparser.ConfigParser()
 
 # Read the config.ini file
 # Please set the path properly before usage
-config.read('./configurations/config.ini')
+config.read('../configurations/config.ini')
 
-LOW = config.get('perturbation_variables', 'LOW')
-HIGH = config.get('perturbation_variables', 'HIGH')
-STEP = config.get('perturbation_variables', 'STEP')
+LOW = config.getfloat('perturbation_variables', 'LOW')
+HIGH = config.getfloat('perturbation_variables', 'HIGH')
+STEP = config.getfloat('perturbation_variables', 'STEP')
 # Now Let's write functions to provide perturbations to each column specific to each data type
 
 # BASIC PERTURBATIONS FOR THE VERSION I: Provides Gaussian Noise by protecting the standard deviation and mean properties of the current column.
@@ -40,7 +40,7 @@ def categorical_perturbation(df, column_name, num_permutations=5):
         tuple: A tuple containing lists of perturbation column names, types, severities, and perturbed datasets.
     """
     df = df.copy()  # Make a copy to avoid modifying the original DataFrame
-    for _ in range(num_permutations):
+    for _ in np.arange(num_permutations):
         df[column_name] = np.random.permutation(df[column_name])  # Shuffle the values in the column
     return df
 
@@ -61,20 +61,20 @@ def numerical_counterfactual_perturbation_gaussian(data, column_name, severity):
     """
     # Get the column to perturb
     column = data[column_name]
-    
+
     # Calculate mean and standard deviation of the original column
     original_mean = column.mean()
     original_std = column.std()
-    
+
     # Generate perturbation based on severity
     perturbation = np.random.normal(loc=0, scale=original_std * severity, size=len(column))
-    
+
     # Apply perturbation while preserving mean and standard deviation
     perturbed_column = original_mean + perturbation
-    
+
     # Replace the original column with the perturbed column
     data[column_name] = perturbed_column
-    
+
     return data
 
 
@@ -92,20 +92,20 @@ def numerical_counterfactual_perturbation_uniform(data, column_name, severity):
     """
     # Get the column to perturb
     column = data[column_name]
-    
+
     # Calculate mean and standard deviation of the original column
-    original_mean = column.mean()
+    # original_mean = column.mean()
     original_range = column.max() - column.min()
-    
+
     # Generate perturbation based on severity
     perturbation = np.random.uniform(low=-original_range * severity, high=original_range * severity, size=len(column))
-    
+
     # Apply perturbation while preserving mean
     perturbed_column = column + perturbation
-    
+
     # Replace the original column with the perturbed column
     data[column_name] = perturbed_column
-    
+
     return data
 
 
@@ -125,20 +125,20 @@ def provide_categorical_perturbation_to_data_sets(X_Cal):
     list_of_perturb_type = []
     list_of_perturb_severity = []
     list_of_df = []
-    
+
     for column_name, dtype in X_Cal.dtypes.items():
-        
+
         if dtype == 'category':
-               for severity in range(LOW,HIGH*10):
-                   copy_x_cal = X_Cal.copy()
-                   # for each column we take a clean dataset and perturb only one column
-                   perturbed_x_cal= categorical_perturbation(copy_x_cal, column_name, severity )
-                   # let's store the new dataset
-                   list_of_df.append(perturbed_x_cal)
-                   list_of_perturb_column.append(column_name)
-                   list_of_perturb_type.append("permutation")
-                   list_of_perturb_severity.append(severity)
-                   
+            for severity in np.arange(LOW,HIGH,STEP):
+                copy_x_cal = X_Cal.copy()
+                # for each column we take a clean dataset and perturb only one column
+                perturbed_x_cal= categorical_perturbation(copy_x_cal, column_name, severity )
+                # let's store the new dataset
+                list_of_df.append(perturbed_x_cal)
+                list_of_perturb_column.append(column_name)
+                list_of_perturb_type.append("permutation")
+                list_of_perturb_severity.append(severity)
+
     return list_of_perturb_column, list_of_perturb_type, list_of_perturb_severity, list_of_df
 
 
@@ -159,15 +159,15 @@ def provide_numerical_perturbation_to_datasets(X_Cal, list_of_df, list_of_pertur
     """
     # Assuming you have a DataFrame named X_Cal
     # Loop through each column and its data type in X_Cal
-   
+
     for column_name, dtype in X_Cal.dtypes.items():
-        
+
         # Check if the data type is float
         if dtype == 'float64' or dtype =='int64': # check those also in other OS
-            
+
             # Loop through perturbation severities (from 0.1 to 0.5 for example)
             for severity in np.arange(LOW, HIGH, STEP):
-                
+
                 # Create a copy of the original dataset
                 copy_x_cal = X_Cal.copy()
                 if noise_type == 'uniform':
@@ -179,12 +179,12 @@ def provide_numerical_perturbation_to_datasets(X_Cal, list_of_df, list_of_pertur
 
                 # Store the perturbed dataset in a list
                 list_of_df.append(perturbed_x_cal)
-                
+
                 # Store information about the perturbation
                 list_of_perturb_column.append(column_name)
                 list_of_perturb_type.append("counterfactual")
                 list_of_perturb_severity.append(severity)
-                
+
     return list_of_perturb_column, list_of_perturb_type, list_of_perturb_severity, list_of_df
 
 def get_perturbed_datasets_summary(list_of_perturb_column, list_of_perturb_type, list_of_perturb_severity, list_of_df):

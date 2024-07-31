@@ -3,22 +3,22 @@ import warnings
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-import pandas as pd
-import numpy as np
-import xgboost as xgb
+# import pandas as pd
+# import numpy as np
+# import xgboost as xgb
 import seaborn as sns
 import matplotlib.pyplot as plt
-from xgboost import XGBClassifier
+# from xgboost import XGBClassifier
 
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder
-from sklearn.preprocessing import StandardScaler
+# from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+# from sklearn.preprocessing import StandardScaler
 
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OrdinalEncoder
-from utils_baseline import *
-from utils_preprocess import *
-from utils_explain import *
-from utils_perturbation import *
+# from sklearn.model_selection import train_test_split
+# from sklearn.preprocessing import OrdinalEncoder
+# from .utils_baseline import *
+# from .utils_preprocess import *
+# from .utils_explain import *
+# from .utils_perturbation import *
 import configparser
 
 # Create a ConfigParser object
@@ -26,10 +26,10 @@ config = configparser.ConfigParser()
 
 # Read the config.ini file
 # Please set the path properly before usage
-config.read('./configurations/config.ini')
+config.read('../configurations/config.ini')
 
-WIDTH = config.get('figure_size_variables', 'WIDTH')
-HEIGHT = config.get('figure_size_variables', 'HEIGHT')
+WIDTH = config.getint('figure_size_variables', 'WIDTH')
+HEIGHT = config.getint('figure_size_variables', 'HEIGHT')
 
 def get_coverage_based_feature_importance(perturbed_df):
     """
