@@ -2,28 +2,28 @@
 
 import pandas as pd
 import numpy as np
-import xgboost as xgb
-import seaborn as sns
-import matplotlib.pyplot as plt
-from xgboost import XGBClassifier
+# import xgboost as xgb
+# import seaborn as sns
+# import matplotlib.pyplot as plt
+# from xgboost import XGBClassifier
 
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder
-from sklearn.preprocessing import StandardScaler
+# from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+# from sklearn.preprocessing import StandardScaler
 
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OrdinalEncoder
-from keras.models import Sequential
+# from sklearn.model_selection import train_test_split
+# from sklearn.preprocessing import OrdinalEncoder
+# from keras.models import Sequential
 
 
 def get_qhat(y_cal_prob_class, alpha, mask):
     """
     Calculate s_scores and adjusted quantile (qhat) based on given parameters.
-    
+
     Args:
         y_cal_prob_class (numpy.ndarray): Array containing predicted probabilities for the calibration set.
         alpha (float): Significance level.
         mask (numpy.ndarray): Mask indicating instances of a specific class.
-    
+
     Returns:
         Tuple[numpy.ndarray, float]: Tuple containing s_scores and adjusted quantile (qhat).
     """
@@ -32,7 +32,7 @@ def get_qhat(y_cal_prob_class, alpha, mask):
     # 2: get adjusted quantile
     #q_level = np.ceil((n+1)*(1-alpha))/n
     #qhat = np.quantile(cal_scores, q_level, method='higher')
-    
+
     class_size = mask.sum()
     #print(class_size)
     correction = ( class_size + 1 ) / class_size # correct it with ceiling function later
@@ -40,20 +40,19 @@ def get_qhat(y_cal_prob_class, alpha, mask):
     q *= correction
     return s_scores, q
 
-'''
+# '''
+# def get_qhat(y_cal_prob_class, alpha, mask):
+#     s_scores = 1 - y_cal_prob_class
 
-def get_qhat(y_cal_prob_class, alpha, mask):
-    s_scores = 1 - y_cal_prob_class
+#     # Calculate the quantile level
+#     n = len(y_cal_prob_class)
+#     q_level = (n + 1 - np.ceil((n + 1) * alpha)) / n  # Adjusted quantile level to ensure it's in [0, 1]
+#     print(q_level)
+#     # Calculate qhat using np.quantile
+#     qhat = np.quantile(s_scores, q=q_level, interpolation='higher')
 
-    # Calculate the quantile level
-    n = len(y_cal_prob_class)
-    q_level = (n + 1 - np.ceil((n + 1) * alpha)) / n  # Adjusted quantile level to ensure it's in [0, 1]
-    print(q_level)
-    # Calculate qhat using np.quantile
-    qhat = np.quantile(s_scores, q=q_level, interpolation='higher')
-    
-    return s_scores, qhat
-'''
+#     return s_scores, qhat
+# '''
 
 
 def get_y_cal_prob_class(y_cal, y_cal_prob, class_label):
@@ -72,7 +71,7 @@ def get_y_cal_prob_class(y_cal, y_cal_prob, class_label):
     #mask = mask.ravel()
     mask = mask.to_numpy()
     y_cal_prob_class = y_cal_prob[mask][:, class_label] # Extracting the softmax scores of the True class
-    
+
     return mask, y_cal_prob_class
 
 def get_individual_thresholds(alpha, n_classes, X_Cal, y_cal, classifier):
@@ -91,11 +90,11 @@ def get_individual_thresholds(alpha, n_classes, X_Cal, y_cal, classifier):
     """
     thresholds = []
     # Get predicted probabilities for calibration set
-    if isinstance(classifier, Sequential):
-       y_cal_prob = classifier.predict(X_Cal)
-    else:
-       y_cal_prob = classifier.predict_proba(X_Cal)
-    
+    # if isinstance(classifier, Sequential):
+    #     y_cal_prob = classifier.predict(X_Cal)
+    # else:
+    y_cal_prob = classifier.predict_proba(X_Cal)
+
     # Get 95th percentile score for each class's s-scores separetly
     for class_label in range(n_classes):
         mask, y_cal_prob_class = get_y_cal_prob_class(y_cal, y_cal_prob, class_label)
@@ -119,18 +118,18 @@ def get_prediction_sets_individually_thresholded(classifier, X_test, thresholds,
         numpy.ndarray: Array containing prediction sets for each class.
     """
     # if the estimator is a sequential object
-    if isinstance(classifier, Sequential):
-       predicted_proba = classifier.predict(X_test)
-    else:
-       predicted_proba = classifier.predict_proba(X_test)
-        
+    # if isinstance(classifier, Sequential):
+    #    predicted_proba = classifier.predict(X_test)
+    # else:
+    predicted_proba = classifier.predict_proba(X_test)
+
     si_scores = 1 - predicted_proba
     # For each class, check whether each instance is below the threshold
     prediction_sets = []
     for i in range(n_classes):
         prediction_sets.append( si_scores[:,i] <= thresholds[i] )
     prediction_sets = np.array(prediction_sets).T
-    
+
     return prediction_sets
 
 # Collate predictions
@@ -148,16 +147,15 @@ def compile_predictions(X_test, y_test, classifier, prediction_sets, class_label
     Returns:
         pandas.DataFrame: DataFrame containing observed class labels, predicted labels, and prediction sets.
     """
-    if isinstance(classifier, Sequential):
-        y_pred = np.argmax(classifier.predict(X_test), axis=1)
-    else:
-        y_pred = classifier.predict(X_test)
-    
+    # if isinstance(classifier, Sequential):
+    #     y_pred = np.argmax(classifier.predict(X_test), axis=1)
+    # else:
+    y_pred = classifier.predict(X_test)
+
     #y_test = y_test.ravel() # formatting y_cal
     y_test = y_test.to_numpy()
     y_test = y_test.astype(int)
 
-    
     results_sets = pd.DataFrame()
     results_sets['observed'] = [class_labels[i] for i in y_test]
     results_sets['labels'] = get_prediction_set_labels(prediction_sets, class_labels)
@@ -185,7 +183,7 @@ def get_coverage_and_set_size(class_labels, y_test, prediction_sets, n_classes):
     results['Total Data Instances Per Class'] = get_class_counts(y_test)
     results['Coverage'] = get_coverage_by_class(prediction_sets, y_test, n_classes)
     results['Average Set Size'] = get_average_set_size(prediction_sets, y_test, n_classes)
-    
+
     return results
 
 # A function to return prediction set labels
@@ -220,7 +218,7 @@ def get_class_counts(y_test):
     class_counts = [] 
     n_classes = len(np.unique(y_test))
     #print('first n_classes: ', str(n_classes))
-                    
+
     for i in range(n_classes):
         class_counts.append(np.sum(y_test == i))
     #print('class counts')
@@ -229,8 +227,7 @@ def get_class_counts(y_test):
 
 
 
-'''
-
+# '''
 def get_coverage_by_class(prediction_sets, y_test, n_classes):
     coverage = []
     for i in range(n_classes):
@@ -246,57 +243,72 @@ def get_coverage_by_class(prediction_sets, y_test, n_classes):
 
 def get_average_set_size(prediction_sets, y_test, n_classes):
     average_set_size = []
-    
+
+    # for i in range(n_classes):
+    #     class_indices = [j for j in range(len(y_test)) if y_test[j] == i]  # Get indices where y_test equals i
+
+    # Debugging: Print type and first few elements of y_test
+    # print(f"Type of y_test: {type(y_test)}")
+    # print(f"First few elements of y_test: {y_test.head() if isinstance(y_test, pd.Series) else y_test[:5]}")
+
     for i in range(n_classes):
-        class_indices = [j for j in range(len(y_test)) if y_test[j] == i]  # Get indices where y_test equals i
+        class_indices = []
+        for j, v in enumerate(y_test):
+            try:
+                if v == i:
+                    class_indices.append(j)
+
+            # class_indices = [j for j in range(len(y_test)) if y_test[j] == i]  # Get indices where y_test equals i
+            except KeyError as e:
+                print(f"KeyError: {e} for index {j} with value {v}")
+                continue
         class_instances = prediction_sets[class_indices, :]
         class_set_size = np.sum(class_instances, axis=1)
         class_average_set_size = np.mean(class_set_size) if len(class_set_size) > 0 else 0
         average_set_size.append(class_average_set_size)
-        
+
     return average_set_size
+# '''
+# # A function that returns the coverage level for each class
+# def get_coverage_by_class(prediction_sets, y_test, n_classes):
+#     """
+#     Calculate the coverage level for each class.
 
-'''
-# A function that returns the coverage level for each class
-def get_coverage_by_class(prediction_sets, y_test, n_classes):
-    """
-    Calculate the coverage level for each class.
+#     Args:
+#         prediction_sets (numpy.ndarray): Array containing prediction sets for each class.
+#         y_test (pandas.Series): True class labels for the test set.
+#         n_classes (int): Number of classes in the dataset.
 
-    Args:
-        prediction_sets (numpy.ndarray): Array containing prediction sets for each class.
-        y_test (pandas.Series): True class labels for the test set.
-        n_classes (int): Number of classes in the dataset.
+#     Returns:
+#         list: List containing the coverage level for each class.
+#     """
+#     # Defining an empty list
+#     coverage = []
 
-    Returns:
-        list: List containing the coverage level for each class.
-    """
-    # Defining an empty list
-    coverage = []
-    
-    for i in range(n_classes):
-        coverage.append(np.mean(prediction_sets[y_test == i, i]))
-    return coverage
-    
-# A function that returns average set size for each class
-def get_average_set_size(prediction_sets, y_test, n_classes):
-    """
-    Calculate the average set size for each class.
+#     for i in range(n_classes):
+#         coverage.append(np.mean(prediction_sets[y_test == i, i]))
+#     return coverage
 
-    Args:
-        prediction_sets (numpy.ndarray): Array containing prediction sets for each class.
-        y_test (pandas.Series): True class labels for the test set.
-        n_classes (int): Number of classes in the dataset.
+# # A function that returns average set size for each class
+# def get_average_set_size(prediction_sets, y_test, n_classes):
+#     """
+#     Calculate the average set size for each class.
 
-    Returns:
-        list: List containing the average set size for each class.
-    """
-    # Defining an empty set
-    average_set_size = []
-    
-    for i in range(n_classes):
-        average_set_size.append(np.mean(np.sum(prediction_sets[y_test == i], axis=1)))
-        
-    return average_set_size
+#     Args:
+#         prediction_sets (numpy.ndarray): Array containing prediction sets for each class.
+#         y_test (pandas.Series): True class labels for the test set.
+#         n_classes (int): Number of classes in the dataset.
+
+#     Returns:
+#         list: List containing the average set size for each class.
+#     """
+#     # Defining an empty set
+#     average_set_size = []
+
+#     for i in range(n_classes):
+#         average_set_size.append(np.mean(np.sum(prediction_sets[y_test == i], axis=1)))
+
+#     return average_set_size
 
 # Get weighted coverage (weighted by class size)
 # Class counts holds the total elements in one class
@@ -320,7 +332,7 @@ def get_weighted_coverage(coverage, class_counts):
 
 # Get weighted set_size (weighted by class size)
 def get_weighted_set_size(set_size, class_counts):
-        """
+    """
     Calculate weighted set size based on class size.
 
     Args:
@@ -335,4 +347,3 @@ def get_weighted_set_size(set_size, class_counts):
     #weighted_set_size = round(weighted_set_size, 3)
 
     return weighted_set_size
-
